@@ -1,2 +1,2 @@
 # gpio
-Go GPIO library
+Go GPIO library.

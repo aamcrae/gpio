@@ -4,6 +4,11 @@
 *.dll
 *.so
 *.dylib
+examples/examples
+examples/pwm
+examples/step
+examples/step2
+examples/watch
 
 # Test binary, built with `go test -c`
 *.test
