@@ -79,6 +79,7 @@ func (s *Stepper) Close() {
 	s.Stop()
 	close(s.mChan)
 	close(s.stopChan)
+	s.Off()
 }
 
 // State returns the current sequence index, so that the current state
