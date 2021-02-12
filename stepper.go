@@ -77,9 +77,9 @@ func NewStepper(rev int, pin1, pin2, pin3, pin4 Setter) *Stepper {
 // Close stops the motor and frees any resources.
 func (s *Stepper) Close() {
 	s.Stop()
+	s.Off()
 	close(s.mChan)
 	close(s.stopChan)
-	s.Off()
 }
 
 // State returns the current sequence index, so that the current state
