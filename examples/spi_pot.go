@@ -38,13 +38,13 @@ func main() {
 	for i := 0; i < spiPotStages; i++ {
 		Wr(s, i)
 	}
-	for i := spiPotStages-1; i >= 0; i-- {
+	for i := spiPotStages - 1; i >= 0; i-- {
 		Wr(s, i)
 	}
 }
 
 func Wr(s *io.Spi, v int) {
-	b := []byte{ byte(v >> 8) & 0x3, byte(v & 0xFF)}
+	b := []byte{byte(v>>8) & 0x3, byte(v & 0xFF)}
 	_, err := s.Write(b)
 	if err != nil {
 		log.Fatalf("write: %v", *unit, err)

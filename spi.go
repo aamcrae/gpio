@@ -33,17 +33,17 @@ var spiDevs = []struct {
 }
 
 const (
-	SPI_MODE_0	= 0
-	SPI_MODE_1	= 1
-	SPI_MODE_2	= 2
-	SPI_MODE_3	= 3
+	SPI_MODE_0 = 0
+	SPI_MODE_1 = 1
+	SPI_MODE_2 = 2
+	SPI_MODE_3 = 3
 
 	SPI_MODE_CS_HIGH   = 0x04
 	SPI_MODE_LSB_FIRST = 0x08
 	// SPI_MODE_3WIRE	   = 0x10	3 wire mode is not supported.
-	SPI_MODE_LOOP	   = 0x20
-	SPI_MODE_NO_CS	   = 0x40
-	SPI_MODE_READY	   = 0x80
+	SPI_MODE_LOOP  = 0x20
+	SPI_MODE_NO_CS = 0x40
+	SPI_MODE_READY = 0x80
 )
 
 var (
@@ -61,25 +61,25 @@ var (
 )
 
 type Spi struct {
-	bus   byte
-	cs    byte
-	file  *os.File
-	fd    int
+	bus  byte
+	cs   byte
+	file *os.File
+	fd   int
 }
 
 type xfer struct {
 	txb int64
 	rxb int64
 
-	ln  uint32
+	ln    uint32
 	speed uint32
 
-	delay uint16
-	bits byte
-	cs byte
+	delay    uint16
+	bits     byte
+	cs       byte
 	tx_nbits byte
 	rx_nbits byte
-	_ uint16
+	_        uint16
 }
 
 // NewSpi creates and initialises a SPI device.
