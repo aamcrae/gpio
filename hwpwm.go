@@ -92,11 +92,11 @@ func (p *HwPwm) Close() {
 // Set sets the PWM parameters.
 func (p *HwPwm) Set(period time.Duration, duty int) error {
 	if duty < 0 || duty > 100 {
-		return fmt.Errorf("%d: invalid duty cycle percentage")
+		return os.ErrInvalid
 	}
 	pNano := period.Nanoseconds()
 	if pNano < 15 {
-		return fmt.Errorf("invalid period")
+		return os.ErrInvalid
 	}
 	dNano := pNano * int64(duty) / 100
 	// When writing the period and duty cycle, the order may be important

@@ -15,7 +15,6 @@
 package io
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -57,7 +56,7 @@ func (p *swPwm) Close() {
 // place at the end of the current period.
 func (p *swPwm) Set(period time.Duration, duty int) error {
 	if duty < 0 || duty > 100 {
-		return fmt.Errorf("%d: invalid duty cycle percentage")
+		return os.ErrInvalid
 	}
 	p.c <- pwmMsg{period, duty, nil}
 	return nil
