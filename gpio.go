@@ -19,6 +19,7 @@ package io
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -90,12 +91,12 @@ func Pin(gpio int) (*Gpio, error) {
 		unexport(gpioUnexportFile, gpio)
 		return nil, err
 	}
-	g.value, err = os.OpenFile(fmt.Sprintf("%s/gpio%d%s", gpioBaseDir, gpio, gpioValueFile), os.O_RDWR, 0600)
+	g.value, err = os.OpenFile(fmt.Sprintf("%sgpio%d%s", gpioBaseDir, gpio, gpioValueFile), os.O_RDWR, 0600)
 	if err != nil {
 		unexport(gpioUnexportFile, gpio)
 		return nil, err
 	}
-	g.pollfd = []unix.PollFd{{int32(g.value.Fd()), unix.POLLPRI | unix.POLLERR, 0}}
+	g.pollfd = []unix.PollFd{{int32(g.value.Fd()), unix.POLLIN | unix.POLLPRI | unix.POLLERR, 0}}
 	return g, nil
 }
 
@@ -108,9 +109,9 @@ func (g *Gpio) Direction(d int) error {
 	case OUT:
 		s = "out"
 	default:
-		return fmt.Errorf("gpio%d: unknown direction", g.number)
+		return os.ErrInvalid
 	}
-	err := writeFile(fmt.Sprintf("%s/gpio%d/direction", gpioBaseDir, g.number), s)
+	err := writeFile(fmt.Sprintf("%sgpio%d/direction", gpioBaseDir, g.number), s)
 	if err == nil {
 		g.direction = d
 	}
@@ -133,9 +134,9 @@ func (g *Gpio) Edge(e int) error {
 	case BOTH:
 		s = "both"
 	default:
-		return fmt.Errorf("gpio%d: unknown direction", g.number)
+		return os.ErrInvalid
 	}
-	err := writeFile(fmt.Sprintf("%s/gpio%d/edge", gpioBaseDir, g.number), s)
+	err := writeFile(fmt.Sprintf("%sgpio%d/edge", gpioBaseDir, g.number), s)
 	if err == nil {
 		g.edge = e
 	}
@@ -152,7 +153,7 @@ func (g *Gpio) Set(v int) error {
 	} else if v == 1 {
 		g.buf[0] = '1'
 	} else {
-		return fmt.Errorf("gpio%d: illegal value", g.number)
+		return os.ErrInvalid
 	}
 	_, err := g.value.WriteAt(g.buf, 0)
 	return err
@@ -160,11 +161,23 @@ func (g *Gpio) Set(v int) error {
 
 // Get returns the current value of the GPIO pin.
 func (g *Gpio) Get() (int, error) {
+	return g.GetTimeout(0)
+}
+
+// GetTimeout is used when detecting edges, and a timeout is required.
+// A timeout of 0 is interpreted as no timeout.
+func (g *Gpio) GetTimeout(tout time.Duration) (int, error) {
 	if g.edge != NONE {
-		// Wait for edge using poll.
+		// Wait for edge using poll with optional timeout.
+		var tout_ms int
+		if tout == 0 {
+			tout_ms = -1
+		} else {
+			tout_ms = int(tout.Milliseconds())
+		}
 		for {
 			g.pollfd[0].Revents = 0
-			_, err := unix.Poll(g.pollfd, -1)
+			_, err := unix.Poll(g.pollfd, tout_ms)
 			switch err {
 			case nil:
 				// Successful call
@@ -177,7 +190,10 @@ func (g *Gpio) Get() (int, error) {
 			}
 			break
 		}
-		// With no timeout, poll should always return an event.
+		// Check for timeout.
+		if tout != 0 && (g.pollfd[0].Revents&unix.POLLIN) == 0 {
+			return 0, os.ErrDeadlineExceeded
+		}
 	}
 	_, err := g.value.ReadAt(g.buf, 0)
 	if err != nil {

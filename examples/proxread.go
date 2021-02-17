@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/aamcrae/gpio"
@@ -33,14 +34,34 @@ func main() {
 	}
 	p := io.NewProximity(pin)
 	last := -1
+	max := -1
+	min := 1_000_000
 	for {
 		v, err := p.Read()
 		if err != nil {
 			log.Fatalf("Read: %v", err)
 		}
-		v = (v - 200) * 100 / 6000
-		if true || v != last {
-			log.Printf("Val = %d\n", v)
+		if v != last {
+			if v > max {
+				max = v
+			}
+			if v < min {
+				min = v
+			}
+			fmt.Printf("Value: %5d, min: %5d, max %5d", v, min, max)
+			if max != min {
+				s := (v - min) * 100 / (max - min)
+				fmt.Printf(", scaled %3d |", s)
+				var i int
+				for ; i < s/10; i++ {
+					fmt.Printf("-")
+				}
+				for ; i < 10; i++ {
+					fmt.Printf(" ")
+				}
+				fmt.Printf("|")
+			}
+			fmt.Printf("\n")
 			last = v
 		}
 	}

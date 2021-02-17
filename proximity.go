@@ -25,7 +25,7 @@ import (
 // discharge through the sensor. The faster the discharge time, the
 // stronger the reflected signal.
 type Proximity struct {
-	pin *Gpio    // Pin for reading and controlling reader.
+	pin *Gpio // Pin for reading and controlling reader.
 }
 
 // NewProximity creates and initialises a Proximity struct.
@@ -47,7 +47,7 @@ func (p *Proximity) Read() (int, error) {
 	now := time.Now()
 	p.pin.Direction(IN)
 	for {
-		v, err := p.pin.Get()
+		v, err := p.pin.GetTimeout(time.Millisecond * 20)
 		if err != nil {
 			return 0, err
 		}
