@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Digital pot example for SPI.
+// Digital pot (MCP4151) example for SPI.
+// 3 Wire I/O.
 
 package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
@@ -48,6 +50,17 @@ func Wr(s *io.Spi, v int) {
 	_, err := s.Write(b)
 	if err != nil {
 		log.Fatalf("write: %v", *unit, err)
+	}
+	if v%32 == 0 {
+		// Read is 0x0C, but due to 3 wire protocol, other
+		// bits need to be set high so sensor can send data.
+		b[0] = 0x0F
+		b[1] = 0xFF
+		rb, err := s.Xfer(b)
+		if err != nil {
+			log.Fatalf("write: %v", *unit, err)
+		}
+		fmt.Printf("Rd = %02x%02x (%d)\n", rb[0], rb[1], (uint(rb[0]&1)<<8)+uint(rb[1]))
 	}
 	time.Sleep(50 * time.Millisecond)
 }
