@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Digital pot (MCP4151) example for SPI.
-// 3 Wire I/O.
+// 3 Wire I/O is used for this device.
 
 package main
 
@@ -46,7 +46,7 @@ func main() {
 }
 
 func Wr(s *io.Spi, v int) {
-	b := []byte{byte(v>>8) & 0x3, byte(v & 0xFF)}
+	b := []byte{byte(v>>8) & 0x1, byte(v & 0xFF)}
 	_, err := s.Write(b)
 	if err != nil {
 		log.Fatalf("write: %v", *unit, err)

@@ -32,6 +32,7 @@ var spiDevs = []struct {
 	{1, 2},
 }
 
+// Spi driver modes.
 const (
 	SPI_MODE_0 = 0
 	SPI_MODE_1 = 1
@@ -101,6 +102,9 @@ func NewSpi(unit int) (*Spi, error) {
 	return s, nil
 }
 
+// Xfer builds and sends a message request.
+// The receive buffer is returned.
+// TODO: The interface will support multiple messages.
 func (s *Spi) Xfer(wb []byte) ([]byte, error) {
 	x := new(xfer)
 	x.txb = int64(uintptr(unsafe.Pointer(&wb[0])))
@@ -112,22 +116,27 @@ func (s *Spi) Xfer(wb []byte) ([]byte, error) {
 	return rb, s.ioctl(spiXfer, uintptr(unsafe.Pointer(x)))
 }
 
+// Write writes the message to the SPI device.
 func (s *Spi) Write(b []byte) (int, error) {
 	return s.file.Write(b)
 }
 
+// Read reads a message from the SPI devices
 func (s *Spi) Read(b []byte) (int, error) {
 	return s.file.Read(b)
 }
 
+// Speed sets the speed of the interface.
 func (s *Spi) Speed(speed uint32) error {
 	return s.ioctl32(spiWrSpeed, &speed)
 }
 
+// Bits selects the word size of the transfer (usually 8 or 9 bits)
 func (s *Spi) Bits(bits byte) error {
 	return s.ioctl8(spiWrBits, &bits)
 }
 
+// Mode sets the mode, which is a combination of mode flags.
 func (s *Spi) Mode(m uint32) error {
 	return s.ioctl32(spiWrMode32, &m)
 }
