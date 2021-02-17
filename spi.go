@@ -65,7 +65,6 @@ type Spi struct {
 	bus  byte
 	cs   byte
 	file *os.File
-	fd   int
 }
 
 type spi_xfer struct {
