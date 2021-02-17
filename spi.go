@@ -48,7 +48,7 @@ const (
 const spiCode uintptr = 'k'
 
 var (
-	spiXfer       = iocW(spiCode, 0, unsafe.Sizeof(xfer{}))
+	spiXfer       = iocW(spiCode, 0, unsafe.Sizeof(spi_xfer{}))
 	spiRdMode     = iocR(spiCode, 1, unsafe.Sizeof(byte(0)))
 	spiWrMode     = iocW(spiCode, 1, unsafe.Sizeof(byte(0)))
 	spiRdLsbFirst = iocR(spiCode, 2, unsafe.Sizeof(byte(0)))
@@ -68,7 +68,7 @@ type Spi struct {
 	fd   int
 }
 
-type xfer struct {
+type spi_xfer struct {
 	txb int64
 	rxb int64
 
@@ -106,7 +106,7 @@ func NewSpi(unit int) (*Spi, error) {
 // The receive buffer is returned.
 // TODO: The interface will support multiple messages.
 func (s *Spi) Xfer(wb []byte) ([]byte, error) {
-	x := new(xfer)
+	x := new(spi_xfer)
 	x.txb = int64(uintptr(unsafe.Pointer(&wb[0])))
 	rb := make([]byte, len(wb))
 	x.rxb = int64(uintptr(unsafe.Pointer(&rb[0])))
