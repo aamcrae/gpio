@@ -32,7 +32,22 @@ var spiDevs = []struct {
 	{1, 2},
 }
 
+const (
+	SPI_MODE_0	= 0
+	SPI_MODE_1	= 1
+	SPI_MODE_2	= 2
+	SPI_MODE_3	= 3
+
+	SPI_MODE_CS_HIGH   = 0x04
+	SPI_MODE_LSB_FIRST = 0x08
+	// SPI_MODE_3WIRE	   = 0x10	3 wire mode is not supported.
+	SPI_MODE_LOOP	   = 0x20
+	SPI_MODE_NO_CS	   = 0x40
+	SPI_MODE_READY	   = 0x80
+)
+
 var (
+	spiXfer       = iocW(0, unsafe.Sizeof(xfer{}))
 	spiRdMode     = iocR(1, unsafe.Sizeof(byte(0)))
 	spiWrMode     = iocW(1, unsafe.Sizeof(byte(0)))
 	spiRdLsbFirst = iocR(2, unsafe.Sizeof(byte(0)))
@@ -50,8 +65,21 @@ type Spi struct {
 	cs    byte
 	file  *os.File
 	fd    int
-	speed int // In Hz
-	bits  int
+}
+
+type xfer struct {
+	txb int64
+	rxb int64
+
+	ln  uint32
+	speed uint32
+
+	delay uint16
+	bits byte
+	cs byte
+	tx_nbits byte
+	rx_nbits byte
+	_ uint16
 }
 
 // NewSpi creates and initialises a SPI device.
@@ -69,7 +97,19 @@ func NewSpi(unit int) (*Spi, error) {
 	}
 	s.Speed(100 * 1000)
 	s.Bits(8)
+	s.Mode(0)
 	return s, nil
+}
+
+func (s *Spi) Xfer(wb []byte) ([]byte, error) {
+	x := new(xfer)
+	x.txb = int64(uintptr(unsafe.Pointer(&wb[0])))
+	rb := make([]byte, len(wb))
+	x.rxb = int64(uintptr(unsafe.Pointer(&rb[0])))
+	x.ln = uint32(len(wb))
+	x.speed = 100 * 1000
+	x.bits = 8
+	return rb, s.ioctl(spiXfer, uintptr(unsafe.Pointer(x)))
 }
 
 func (s *Spi) Write(b []byte) (int, error) {
@@ -86,6 +126,10 @@ func (s *Spi) Speed(speed uint32) error {
 
 func (s *Spi) Bits(bits byte) error {
 	return s.ioctl8(spiWrBits, &bits)
+}
+
+func (s *Spi) Mode(m uint32) error {
+	return s.ioctl32(spiWrMode32, &m)
 }
 
 // Close closes the SPI controller

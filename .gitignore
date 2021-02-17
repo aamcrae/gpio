@@ -11,6 +11,7 @@ examples/step2
 examples/watch
 examples/proxread
 examples/spi_loopback
+examples/spi_pot
 
 # Test binary, built with `go test -c`
 *.test
