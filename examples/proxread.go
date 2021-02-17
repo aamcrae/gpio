@@ -27,6 +27,8 @@ import (
 var proxPin = flag.Int("pin", 21, "GPIO pin for sensor")
 var proxMin = flag.Int("min", 200, "Minimum value allowed")
 var proxMax = flag.Int("max", 2500, "Maximum value allowed")
+var proxOn = flag.Int("on", 2000, "Minimum value of on")
+var proxOff = flag.Int("off", 800, "Maximum value of off")
 
 func main() {
 	flag.Parse()
@@ -38,7 +40,7 @@ func main() {
 	p.Min = *proxMin
 	p.Max = *proxMax
 	last := -1
-	lastSeg := -1
+	lastBit := ' '
 	max := -1
 	min := 1_000_000
 	for {
@@ -56,12 +58,21 @@ func main() {
 			if max == min {
 				continue
 			}
-			s := (v - min) * 100 / (max - min)
-			if lastSeg == s/10 {
+			var b rune
+			if v < *proxOff {
+				b = '0'
+			} else if v > *proxOn {
+				b = '1'
+			} else {
+				b = '?'
+			}
+			if b == lastBit {
 				continue
 			}
+			lastBit = b
+			s := (v - min) * 100 / (max - min)
 			fmt.Printf("Value: %5d, min: %5d, max %5d", v, min, max)
-			fmt.Printf(", scaled %3d |", s)
+			fmt.Printf(", Bit %c, scaled %3d |", b, s)
 			var i int
 			for ; i < s/10; i++ {
 				fmt.Printf("-")
@@ -71,7 +82,6 @@ func main() {
 			}
 			fmt.Printf("|\n")
 			last = v
-			lastSeg = s/10
 		}
 	}
 }
