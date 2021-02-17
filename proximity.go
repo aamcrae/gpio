@@ -20,9 +20,12 @@ import (
 
 // Proximity represents a driver for the QRE1113 proximity sensor, configured
 // as a digital circuit.
+// This operates by setting the pin as an output, charging a capacitor,
+// and then switching the pin to an input and waiting for the capacitor to
+// discharge through the sensor. The faster the discharge time, the
+// stronger the reflected signal.
 type Proximity struct {
 	pin *Gpio    // Pin for reading and controlling reader.
-	offset, scale int
 }
 
 // NewProximity creates and initialises a Proximity struct.

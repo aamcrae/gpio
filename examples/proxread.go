@@ -39,7 +39,7 @@ func main() {
 			log.Fatalf("Read: %v", err)
 		}
 		v = (v - 200) * 100 / 6000
-		if v != last {
+		if true || v != last {
 			log.Printf("Val = %d\n", v)
 			last = v
 		}
