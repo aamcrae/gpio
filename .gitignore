@@ -10,6 +10,7 @@ examples/step
 examples/step2
 examples/watch
 examples/proxread
+examples/spi_loopback
 
 # Test binary, built with `go test -c`
 *.test

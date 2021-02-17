@@ -25,13 +25,13 @@ import (
 // discharge through the sensor. The faster the discharge time, the
 // stronger the reflected signal.
 type Proximity struct {
-	pin *Gpio	 // Pin for reading and controlling reader.
-	Min, Max int // For range checks
+	pin      *Gpio // Pin for reading and controlling reader.
+	Min, Max int   // For range checks
 }
 
 // NewProximity creates and initialises a Proximity struct.
 func NewProximity(pin *Gpio) *Proximity {
-	p := &Proximity{ pin, 100, 5000 }
+	p := &Proximity{pin, 100, 5000}
 	p.pin.Direction(IN)
 	p.pin.Edge(FALLING)
 	return p
