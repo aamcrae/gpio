@@ -17,6 +17,7 @@
 package io
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/user"
@@ -39,6 +40,10 @@ const verifyTimeout = 2 * time.Second
 // the file group/modes are changed, we will get a permission error.
 // This can be overridden.
 var Verify = false
+
+var (
+	ErrRetriesExceeded = errors.New("retries exceeded")
+)
 
 func init() {
 	// If the user is not root, enable Verify mode

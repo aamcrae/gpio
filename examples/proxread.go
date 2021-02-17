@@ -24,7 +24,9 @@ import (
 	"github.com/aamcrae/gpio"
 )
 
-var proxPin = flag.Int("pin", 17, "GPIO pin for sensor")
+var proxPin = flag.Int("pin", 21, "GPIO pin for sensor")
+var proxMin = flag.Int("min", 200, "Minimum value allowed")
+var proxMax = flag.Int("max", 2500, "Maximum value allowed")
 
 func main() {
 	flag.Parse()
@@ -33,7 +35,10 @@ func main() {
 		log.Fatalf("GPIO %d: %v", *proxPin, err)
 	}
 	p := io.NewProximity(pin)
+	p.Min = *proxMin
+	p.Max = *proxMax
 	last := -1
+	lastSeg := -1
 	max := -1
 	min := 1_000_000
 	for {
@@ -48,21 +53,25 @@ func main() {
 			if v < min {
 				min = v
 			}
-			fmt.Printf("Value: %5d, min: %5d, max %5d", v, min, max)
-			if max != min {
-				s := (v - min) * 100 / (max - min)
-				fmt.Printf(", scaled %3d |", s)
-				var i int
-				for ; i < s/10; i++ {
-					fmt.Printf("-")
-				}
-				for ; i < 10; i++ {
-					fmt.Printf(" ")
-				}
-				fmt.Printf("|")
+			if max == min {
+				continue
 			}
-			fmt.Printf("\n")
+			s := (v - min) * 100 / (max - min)
+			if lastSeg == s/10 {
+				continue
+			}
+			fmt.Printf("Value: %5d, min: %5d, max %5d", v, min, max)
+			fmt.Printf(", scaled %3d |", s)
+			var i int
+			for ; i < s/10; i++ {
+				fmt.Printf("-")
+			}
+			for ; i < 10; i++ {
+				fmt.Printf(" ")
+			}
+			fmt.Printf("|\n")
 			last = v
+			lastSeg = s/10
 		}
 	}
 }
