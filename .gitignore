@@ -9,6 +9,7 @@ examples/pwm
 examples/step
 examples/step2
 examples/watch
+examples/proxread
 
 # Test binary, built with `go test -c`
 *.test
