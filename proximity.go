@@ -31,7 +31,7 @@ type Proximity struct {
 
 // NewProximity creates and initialises a Proximity struct.
 func NewProximity(pin *Gpio) *Proximity {
-	p := &Proximity{ pin, 200, 5000 }
+	p := &Proximity{ pin, 100, 5000 }
 	p.pin.Direction(IN)
 	p.pin.Edge(FALLING)
 	return p
