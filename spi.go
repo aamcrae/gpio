@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"os"
 	"unsafe"
-
-	"golang.org/x/sys/unix"
 )
 
 var spiDevs = []struct {
@@ -47,18 +45,20 @@ const (
 	SPI_MODE_READY = 0x80
 )
 
+const spiCode uintptr = 'k'
+
 var (
-	spiXfer       = iocW(0, unsafe.Sizeof(xfer{}))
-	spiRdMode     = iocR(1, unsafe.Sizeof(byte(0)))
-	spiWrMode     = iocW(1, unsafe.Sizeof(byte(0)))
-	spiRdLsbFirst = iocR(2, unsafe.Sizeof(byte(0)))
-	spiWrLsbFirst = iocW(2, unsafe.Sizeof(byte(0)))
-	spiRdBits     = iocR(3, unsafe.Sizeof(byte(0)))
-	spiWrBits     = iocW(3, unsafe.Sizeof(byte(0)))
-	spiRdSpeed    = iocR(4, unsafe.Sizeof(uint32(0)))
-	spiWrSpeed    = iocW(4, unsafe.Sizeof(uint32(0)))
-	spiRdMode32   = iocR(5, unsafe.Sizeof(uint32(0)))
-	spiWrMode32   = iocW(5, unsafe.Sizeof(uint32(0)))
+	spiXfer       = iocW(spiCode, 0, unsafe.Sizeof(xfer{}))
+	spiRdMode     = iocR(spiCode, 1, unsafe.Sizeof(byte(0)))
+	spiWrMode     = iocW(spiCode, 1, unsafe.Sizeof(byte(0)))
+	spiRdLsbFirst = iocR(spiCode, 2, unsafe.Sizeof(byte(0)))
+	spiWrLsbFirst = iocW(spiCode, 2, unsafe.Sizeof(byte(0)))
+	spiRdBits     = iocR(spiCode, 3, unsafe.Sizeof(byte(0)))
+	spiWrBits     = iocW(spiCode, 3, unsafe.Sizeof(byte(0)))
+	spiRdSpeed    = iocR(spiCode, 4, unsafe.Sizeof(uint32(0)))
+	spiWrSpeed    = iocW(spiCode, 4, unsafe.Sizeof(uint32(0)))
+	spiRdMode32   = iocR(spiCode, 5, unsafe.Sizeof(uint32(0)))
+	spiWrMode32   = iocW(spiCode, 5, unsafe.Sizeof(uint32(0)))
 )
 
 type Spi struct {
@@ -113,7 +113,7 @@ func (s *Spi) Xfer(wb []byte) ([]byte, error) {
 	x.ln = uint32(len(wb))
 	x.speed = 100 * 1000
 	x.bits = 8
-	return rb, s.ioctl(spiXfer, uintptr(unsafe.Pointer(x)))
+	return rb, ioctl(s.file.Fd(), spiXfer, uintptr(unsafe.Pointer(x)))
 }
 
 // Write writes the message to the SPI device.
@@ -128,48 +128,20 @@ func (s *Spi) Read(b []byte) (int, error) {
 
 // Speed sets the speed of the interface.
 func (s *Spi) Speed(speed uint32) error {
-	return s.ioctl32(spiWrSpeed, &speed)
+	return ioctl32(s.file.Fd(), spiWrSpeed, &speed)
 }
 
 // Bits selects the word size of the transfer (usually 8 or 9 bits)
 func (s *Spi) Bits(bits byte) error {
-	return s.ioctl8(spiWrBits, &bits)
+	return ioctl8(s.file.Fd(), spiWrBits, &bits)
 }
 
 // Mode sets the mode, which is a combination of mode flags.
 func (s *Spi) Mode(m uint32) error {
-	return s.ioctl32(spiWrMode32, &m)
+	return ioctl32(s.file.Fd(), spiWrMode32, &m)
 }
 
 // Close closes the SPI controller
 func (s *Spi) Close() {
 	s.file.Close()
-}
-
-func (s *Spi) ioctl8(req uintptr, b *byte) error {
-	return s.ioctl(req, uintptr(unsafe.Pointer(b)))
-}
-
-func (s *Spi) ioctl32(req uintptr, i *uint32) error {
-	return s.ioctl(req, uintptr(unsafe.Pointer(i)))
-}
-
-func (s *Spi) ioctl(req, arg uintptr) error {
-	_, _, ep := unix.Syscall(unix.SYS_IOCTL, s.file.Fd(), req, arg)
-	if ep != 0 {
-		return ep
-	}
-	return nil
-}
-
-func iocR(nr, sz uintptr) uintptr {
-	return iocreq(2, nr, sz)
-}
-
-func iocW(nr, sz uintptr) uintptr {
-	return iocreq(1, nr, sz)
-}
-
-func iocreq(dir, nr, sz uintptr) uintptr {
-	return (dir << 30) | (sz << 16) | (uintptr('k') << 8) | nr
 }
