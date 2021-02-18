@@ -31,6 +31,12 @@ type Setter interface {
 	Set(int) error
 }
 
+// Interface for PWM controllers
+type PWM interface {
+	Close()
+	Set(time.Duration, int) error
+}
+
 const verifyTimeout = 2 * time.Second
 
 // Verify will enable waiting for exported files to become writable.

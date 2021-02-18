@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/aamcrae/gpio"
+	"github.com/aamcrae/gpio/action"
 )
 
 const halfStepsRev = 2048 * 2
@@ -51,8 +52,8 @@ func main() {
 		}
 		defer pins[i].Close()
 	}
-	stepperA := io.NewStepper(halfStepsRev, pins[0], pins[1], pins[2], pins[3])
-	stepperB := io.NewStepper(halfStepsRev, pins[4], pins[5], pins[6], pins[7])
+	stepperA := action.NewStepper(halfStepsRev, pins[0], pins[1], pins[2], pins[3])
+	stepperB := action.NewStepper(halfStepsRev, pins[4], pins[5], pins[6], pins[7])
 	defer stepperA.Close()
 	defer stepperB.Close()
 	stepperA.Restore(0)

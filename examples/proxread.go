@@ -22,6 +22,7 @@ import (
 	"log"
 
 	"github.com/aamcrae/gpio"
+	"github.com/aamcrae/gpio/sensor"
 )
 
 var proxPin = flag.Int("pin", 21, "GPIO pin for sensor")
@@ -36,7 +37,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("GPIO %d: %v", *proxPin, err)
 	}
-	p := io.NewProximity(pin)
+	p := sensor.NewProximity(pin)
 	p.Min = *proxMin
 	p.Max = *proxMax
 	last := -1

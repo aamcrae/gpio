@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io
+package action
 
 import (
 	"sync/atomic"
 	"time"
+
+	"github.com/aamcrae/gpio"
 )
 
 const stepperQueueSize = 20 // Size of queue for requests
@@ -34,7 +36,7 @@ type msg struct {
 // 0 when the stepper is first initialised. This can be a negative or positive number,
 // depending on the movement.
 type Stepper struct {
-	pin1, pin2, pin3, pin4 Setter    // Pins for controlling outputs
+	pin1, pin2, pin3, pin4 io.Setter // Pins for controlling outputs
 	factor                 float64   // Number of steps per revolution.
 	mChan                  chan msg  // channel for message requests
 	stopChan               chan bool // channel for signalling resets.
@@ -59,7 +61,7 @@ var sequence = [][]int{
 // a stepper motor controlled by 4 GPIO pins.
 // rev is the number of steps per revolution as a reference value for
 // determining the delays between steps.
-func NewStepper(rev int, pin1, pin2, pin3, pin4 Setter) *Stepper {
+func NewStepper(rev int, pin1, pin2, pin3, pin4 io.Setter) *Stepper {
 	s := new(Stepper)
 	// Precalculate a timing factor so that a RPM value can be used
 	// to calculate the per-sequence step delay.

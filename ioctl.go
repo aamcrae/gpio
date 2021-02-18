@@ -44,6 +44,10 @@ func iocW(code, nr, sz uintptr) uintptr {
 	return iocreq(1, code, nr, sz)
 }
 
+func iocRW(code, nr, sz uintptr) uintptr {
+	return iocreq(1|2, code, nr, sz)
+}
+
 func iocreq(dir, code, nr, sz uintptr) uintptr {
 	return (dir << 30) | (sz << 16) | (code << 8) | nr
 }

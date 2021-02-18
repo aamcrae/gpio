@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io
+package action
 
 import (
 	"os"
 	"time"
-)
 
-type PWM interface {
-	Close()
-	Set(time.Duration, int) error
-}
+	"github.com/aamcrae/gpio"
+)
 
 type pwmMsg struct {
 	period time.Duration
@@ -31,12 +28,12 @@ type pwmMsg struct {
 }
 
 type swPwm struct {
-	pin Setter
+	pin io.Setter
 	c   chan pwmMsg
 }
 
 // NewPWM creates a new s/w PWM controller.
-func NewSwPWM(pin Setter) *swPwm {
+func NewSwPWM(pin io.Setter) *swPwm {
 	p := new(swPwm)
 	p.pin = pin
 	p.c = make(chan pwmMsg, 1)

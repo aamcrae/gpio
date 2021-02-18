@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io
+package sensor
 
 import (
 	"time"
+
+	"github.com/aamcrae/gpio"
 )
 
 // Proximity represents a driver for the QRE1113 proximity sensor, configured
@@ -25,15 +27,15 @@ import (
 // discharge through the sensor. The faster the discharge time, the
 // stronger the reflected signal.
 type Proximity struct {
-	pin      *Gpio // Pin for reading and controlling reader.
-	Min, Max int   // For range checks
+	pin      *io.Gpio // Pin for reading and controlling reader.
+	Min, Max int      // For range checks
 }
 
 // NewProximity creates and initialises a Proximity struct.
-func NewProximity(pin *Gpio) *Proximity {
+func NewProximity(pin *io.Gpio) *Proximity {
 	p := &Proximity{pin, 100, 5000}
-	p.pin.Direction(IN)
-	p.pin.Edge(FALLING)
+	p.pin.Direction(io.IN)
+	p.pin.Edge(io.FALLING)
 	return p
 }
 
@@ -42,11 +44,11 @@ func NewProximity(pin *Gpio) *Proximity {
 // The duration is returned as the number of microseconds.
 func (p *Proximity) Read() (int, error) {
 	for retries := 0; retries < 5; retries++ {
-		p.pin.Direction(OUT)
+		p.pin.Direction(io.OUT)
 		p.pin.Set(1)
 		time.Sleep(time.Microsecond * 100)
 		now := time.Now()
-		p.pin.Direction(IN)
+		p.pin.Direction(io.IN)
 		for {
 			v, err := p.pin.GetTimeout(time.Millisecond * 20)
 			if err != nil {
@@ -62,5 +64,5 @@ func (p *Proximity) Read() (int, error) {
 			}
 		}
 	}
-	return 0, ErrRetriesExceeded
+	return 0, io.ErrRetriesExceeded
 }
