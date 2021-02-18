@@ -21,13 +21,14 @@ import (
 	"unsafe"
 )
 
+// I2cMsg represents a single read or write message.
 type I2cMsg struct {
 	Addr  uint16
 	Flags int
 	Buf   []byte
 }
 
-const I2cMaxMsgs = 42
+const I2cMaxMsgs = 42 // Maximum number of messages allowed in transaction
 
 // Flags
 const (
@@ -38,18 +39,20 @@ const (
 const i2cCode uintptr = 7
 
 var (
-	i2cRetries    = iocW(i2cCode, 1, unsafe.Sizeof(uintptr(0)))
-	i2cTimeout    = iocW(i2cCode, 2, unsafe.Sizeof(uintptr(0)))
-	i2cSlave      = iocW(i2cCode, 3, unsafe.Sizeof(uintptr(0)))
-	i2cTenBit     = iocW(i2cCode, 4, unsafe.Sizeof(uintptr(0)))
-	i2cFuncs      = iocW(i2cCode, 5, unsafe.Sizeof(uintptr(0)))
-	i2cSlaveForce = iocW(i2cCode, 6, unsafe.Sizeof(uintptr(0)))
-	i2cRdWr       = iocW(spiCode, 7, unsafe.Sizeof(i2c_rdwr{}))
+	i2cRetries    uintptr = 0x0701
+	i2cTimeout    uintptr = 0x0702
+	i2cSlave      uintptr = 0x0703
+	i2cTenBit     uintptr = 0x0704
+	i2cFuncs      uintptr = 0x0705
+	i2cSlaveForce uintptr = 0x0706
+	i2cRdWr       uintptr = 0x0707
 )
 
+// I2C represents one I2C device
 type I2C struct {
 	bus   int
 	file  *os.File
+	addr  uint16 // Default address
 	funcs uint32
 }
 
@@ -92,12 +95,27 @@ func (i2 *I2C) Close() {
 	i2.file.Close()
 }
 
+// Addr sets the default address.
+func (i2 *I2C) Addr(addr uint16) error {
+	if (i2.funcs & 0x0002) != 0 { // 10 bit address allowed
+		if addr >= (1 << 10) {
+			return os.ErrInvalid
+		}
+	} else if addr >= (1 << 7) {
+		return os.ErrInvalid
+	}
+	i2.addr = addr
+	return nil
+}
+
+// Timeout sets the default timeout for the bus.
 func (i2 *I2C) Timeout(tout time.Duration) error {
 	// Round up to nearest 10 ms
 	v := uintptr((tout.Milliseconds() + 9) / 10)
 	return ioctl(i2.file.Fd(), i2cTimeout, v)
 }
 
+// TenBit enables 10 bit addresses.
 func (i2 *I2C) TenBit(ten bool) error {
 	var v uintptr
 	if ten {
@@ -106,10 +124,47 @@ func (i2 *I2C) TenBit(ten bool) error {
 	return ioctl(i2.file.Fd(), i2cTenBit, v)
 }
 
+// Retries sets the default number of message retries.
 func (i2 *I2C) Retries(r int) error {
 	return ioctl(i2.file.Fd(), i2cRetries, uintptr(r))
 }
 
+// Read builds a message slice that writes an 8 bit register value to the
+// device and then reads data from the peripheral device.
+func (i2 *I2C) Read(reg byte, b []byte) error {
+	m := make([]I2cMsg, 2)
+	m[0].Addr = i2.addr
+	m[0].Buf = []byte{reg}
+	m[1].Addr = i2.addr
+	m[1].Flags = I2cFlagRead
+	m[1].Buf = b
+	return i2.Message(m)
+}
+
+// Write builds a message to write a register address to the peripheral device
+// followed by the byte data.
+func (i2 *I2C) Write(reg byte, data []byte) error {
+	m := make([]I2cMsg, 1)
+	m[0].Addr = i2.addr
+	m[0].Buf = append([]byte{reg}, data...)
+	return i2.Message(m)
+}
+
+// ReadReg reads one 8 bit register from the peripheral device by
+// writing a register address and then reading 1 byte from the device.
+func (i2 *I2C) ReadReg(reg byte) (byte, error) {
+	b := []byte{0}
+	err := i2.Read(reg, b)
+	return b[0], err
+}
+
+// WriteReg writes one register in the peripheral device.
+func (i2 *I2C) WriteReg(reg, data byte) error {
+	return i2.Write(reg, []byte{data})
+}
+
+// Message writes or reads the list of messages to/from the
+// peripheral device.
 func (i2 *I2C) Message(msgs []I2cMsg) error {
 	if len(msgs) == 0 || len(msgs) > I2cMaxMsgs {
 		return os.ErrInvalid
@@ -131,6 +186,5 @@ func (i2 *I2C) Message(msgs []I2cMsg) error {
 	if err != nil {
 		return err
 	}
-	// Walk through the buffers and adjust the lengths.
 	return nil
 }
