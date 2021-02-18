@@ -116,6 +116,17 @@ func (i2 *I2C) Message(msgs []I2cMsg) error {
 	}
 	m := make([]i2c_msg, len(msgs))
 	mi := &i2c_rdwr{uintptr(unsafe.Pointer(&m[0])), uint32(len(m))}
+	for i := range msgs {
+		m[i].addr = msgs[i].Addr
+		m[i].len = uint16(len(msgs[i].Buf))
+		m[i].buf = uintptr(unsafe.Pointer(&msgs[i].Buf[0]))
+		if msgs[i].Flags&I2cFlagRead != 0 {
+			m[i].flags |= 0x0001
+		}
+		if msgs[i].Flags&I2cFlagTenBit != 0 {
+			m[i].flags |= 0x0010
+		}
+	}
 	err := ioctl(i2.file.Fd(), i2cRdWr, uintptr(unsafe.Pointer(mi)))
 	if err != nil {
 		return err
