@@ -22,6 +22,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/aamcrae/gpio"
 )
@@ -72,5 +73,22 @@ func main() {
 	binary.Read(buf, binary.BigEndian, &p.MB)
 	binary.Read(buf, binary.BigEndian, &p.MC)
 	binary.Read(buf, binary.BigEndian, &p.MD)
-	fmt.Printf("AC1: %d, AC2: %d, AC3: %d\n", p.AC1, p.AC2, p.AC3)
+	fmt.Printf("AC6 = %d, AC5 = %d, MC = %d, MD = %d\n", p.AC6, p.AC5, p.MC, p.MD)
+	i2.WriteReg(0xF4, 0x2E)
+	time.Sleep(5 * time.Millisecond)
+	b = make([]byte, 2)
+	i2.Read(0xF6, b)
+	UT := binary.BigEndian.Uint16(b)
+	oss := byte(0)
+	i2.WriteReg(0xF4, 0x34+(oss<<6))
+	time.Sleep(5 * time.Millisecond)
+	b = make([]byte, 3)
+	i2.Read(0xF6, b)
+	UP := ((uint(b[0]) << 16) | (uint(b[1]) << 8) | uint(b[2])) >> (8 - oss)
+	x1 := int((int64(UT) - int64(p.AC6)) * int64(p.AC5) / (1 << 15))
+	x2 := int(p.MC) * (1 << 11) / (int(x1) + int(p.MD))
+	b5 := x1 + x2
+	t := (b5 + 8) / (1 << 4)
+	fmt.Printf("t = %d, UP = %d, UT = %d, b5 = %d, x1 = %d, x2 = %d\n", t, UP, UT, b5, x1, x2)
+	fmt.Printf("Temperature = %.1f degrees\n", float64(t)/10)
 }
