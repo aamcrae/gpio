@@ -12,6 +12,7 @@ examples/watch
 examples/proxread
 examples/spi_loopback
 examples/spi_pot
+examples/bmp180
 
 # Test binary, built with `go test -c`
 *.test
