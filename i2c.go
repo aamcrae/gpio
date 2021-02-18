@@ -22,48 +22,48 @@ import (
 )
 
 type I2cMsg struct {
-	Addr uint16
+	Addr  uint16
 	Flags int
-	Buf []byte
+	Buf   []byte
 }
 
 const I2cMaxMsgs = 42
 
 // Flags
 const (
-	I2cFlagRead = 1 << iota		// Message is to be read, not written
-	I2cFlagTenBit				// Address is 10 bit address
+	I2cFlagRead   = 1 << iota // Message is to be read, not written
+	I2cFlagTenBit             // Address is 10 bit address
 )
 
 const i2cCode uintptr = 7
 
 var (
-	i2cRetries       = iocW(i2cCode, 1, unsafe.Sizeof(uintptr(0)))
-	i2cTimeout       = iocW(i2cCode, 2, unsafe.Sizeof(uintptr(0)))
-	i2cSlave         = iocW(i2cCode, 3, unsafe.Sizeof(uintptr(0)))
-	i2cTenBit        = iocW(i2cCode, 4, unsafe.Sizeof(uintptr(0)))
-	i2cFuncs         = iocW(i2cCode, 5, unsafe.Sizeof(uintptr(0)))
-	i2cSlaveForce    = iocW(i2cCode, 6, unsafe.Sizeof(uintptr(0)))
-	i2cRdWr          = iocW(spiCode, 7, unsafe.Sizeof(i2c_rdwr{}))
+	i2cRetries    = iocW(i2cCode, 1, unsafe.Sizeof(uintptr(0)))
+	i2cTimeout    = iocW(i2cCode, 2, unsafe.Sizeof(uintptr(0)))
+	i2cSlave      = iocW(i2cCode, 3, unsafe.Sizeof(uintptr(0)))
+	i2cTenBit     = iocW(i2cCode, 4, unsafe.Sizeof(uintptr(0)))
+	i2cFuncs      = iocW(i2cCode, 5, unsafe.Sizeof(uintptr(0)))
+	i2cSlaveForce = iocW(i2cCode, 6, unsafe.Sizeof(uintptr(0)))
+	i2cRdWr       = iocW(spiCode, 7, unsafe.Sizeof(i2c_rdwr{}))
 )
 
 type I2C struct {
-	bus  int
-	file *os.File
+	bus   int
+	file  *os.File
 	funcs uint32
 }
 
 type i2c_rdwr struct {
-	msgs uintptr
+	msgs  uintptr
 	count uint32
 }
 
 type i2c_msg struct {
-	addr uint16
+	addr  uint16
 	flags uint16
-	len	uint16
-	_ uint16		// Explicit pad - the ioctl does not have this, caveat.
-	buf uintptr
+	len   uint16
+	_     uint16 // Explicit pad - the ioctl does not have this, caveat.
+	buf   uintptr
 }
 
 // NewI2C creates and initialises a new I2C device.
